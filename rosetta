@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+
+import re
+
+trnsl = { 
+          "BMW" : {
+                        "1-series" : re.compile("M?1[0-9]{2}.", flags=re.IGNORECASE),
+                        "2-series" : re.compile("M?2[0-9]{2}.", flags=re.IGNORECASE),
+                        "3-series" : re.compile("M?3[0-9]{2}.", flags=re.IGNORECASE),
+                        "4-series" : re.compile("M?4[0-9]{2}.", flags=re.IGNORECASE),
+                        "5-series" : re.compile("M?5[0-9]{2}.", flags=re.IGNORECASE),
+                        "6-series" : re.compile("M?6[0-9]{2}.", flags=re.IGNORECASE),
+                        "7-series" : re.compile("M?7[0-9]{2}.", flags=re.IGNORECASE),
+                        "8-series" : re.compile("M?8[0-9]{2}.", flags=re.IGNORECASE),
+                        "M6" : re.compile("M6 (?<!Gran)Coupe.*?(?!Gran)", flags=re.IGNORECASE)
+          },
+          "Audi" : { 
+                        " TT : TTS " : re.compile("(?: |^)TT(?: |$)", flags=re.IGNORECASE)
+
+          },
+          "Jaguar" : {
+                        "F-type foo" : re.compile("F-type(?!.* R(?: |$).*).*", flags=re.IGNORECASE),
+                        "S-type" : re.compile("S-type.*", flags=re.IGNORECASE),
+                        "Q-type" : re.compile("Q-type.*", flags=re.IGNORECASE),
+                        "E-type" : re.compile("E-type.*", flags=re.IGNORECASE),
+                        "X-type" : re.compile("X-type.*", flags=re.IGNORECASE)
+          },
+          "Mini" : {
+                        "JCW" : re.compile("J..n Co.per Works", flags=re.IGNORECASE),
+                        "Cooper Hardtop foo" : re.compile("^Cooper(?!.*Hardtop|.*Clubman|.*Countryman|.*Coupe|.*Convertible|.*Paceman|.*Roadster)", flags=re.IGNORECASE),
+                        "GP Hardtop" : re.compile("GP", flags=re.IGNORECASE),
+                        " JCW " : re.compile(" S ", flags=re.IGNORECASE)
+          },
+          "Nissan" : {
+                           "Z" : re.compile("[0-9]{3}Z", flags=re.IGNORECASE)
+          },
+          "Mercedes-Benz" : {
+                                  "GL-class" : re.compile("GL[0-9]{3}", flags=re.IGNORECASE),
+                                  "V-class" : re.compile("V[0-9]{3}", flags=re.IGNORECASE),
+                                  "M-class" : re.compile("M[0-9]{3}", flags=re.IGNORECASE),
+                                  "E-class" : re.compile("E[0-9]{3}", flags=re.IGNORECASE),
+                                  "R-class" : re.compile("R[0-9]{3}", flags=re.IGNORECASE),
+                                  "S-class" : re.compile("S[0-9]{3}", flags=re.IGNORECASE),
+                                  "A-class" : re.compile("A[0-9]{3}", flags=re.IGNORECASE),
+                                  "B-class" : re.compile("B[0-9]{3}", flags=re.IGNORECASE),
+                                  "C-class" : re.compile("C[0-9]{3}", flags=re.IGNORECASE),
+                                  "CL-class" : re.compile("CL[0-9]{3}", flags=re.IGNORECASE),
+                                  "SL-class" : re.compile("SL[0-9]{3}", flags=re.IGNORECASE),
+                                  "CLA-class" : re.compile("CLA[0-9]{3}", flags=re.IGNORECASE),
+                                  "CLK-class" : re.compile("CLK[0-9]{3}", flags=re.IGNORECASE),
+                                  "SLK-class" : re.compile("SLK[0-9]{3}", flags=re.IGNORECASE),
+                                  "CLS-class" : re.compile("CLS[0-9]{3}", flags=re.IGNORECASE),
+                                  "MLC-class" : re.compile("MLC[0-9]{3}", flags=re.IGNORECASE),
+                                  "SLC-class" : re.compile("SLC[0-9]{3}", flags=re.IGNORECASE),
+                                  "SLR-class" : re.compile("SLR[0-9]{3}", flags=re.IGNORECASE),
+                                  " SLS AMG " : re.compile("(?: |^)SLS ", flags=re.IGNORECASE),
+          },
+          "Dodge" : { 
+                        "Challenger SRT Hellcat" : re.compile("Challenger SRT.?(?!.*Demon)(?!.*Hellcat)", flags=re.IGNORECASE),
+                        "Charger SRT Hellcat" : re.compile("Charger SRT.?(?!.*Hellcat)", flags=re.IGNORECASE)
+          },
+          "Mazda" : {
+                        "Mazda 2 2 2 2 " : re.compile("^2(?: |$)", flags=re.IGNORECASE),
+                        "Mazda 3 3 3 3 " : re.compile("^3(?: |$)", flags=re.IGNORECASE),
+                        "Mazda 5 5 5 5 " : re.compile("^5(?: |$)", flags=re.IGNORECASE),
+                        "Mazda 6 6 6 6 " : re.compile("^6(?: |$)", flags=re.IGNORECASE)
+          },
+          "Porsche" : {
+                        "718 Boxster" : re.compile("Boxster(?!.*GT4)", flags=re.IGNORECASE),
+                        "718 Cayman" : re.compile("Cayman(?!.*GT4)", flags=re.IGNORECASE),
+          },
+          "Ford" : {
+                      "Shelby GT350" : re.compile("Mustang Shelby.*(?:GT-R|GT350R|GT350)", flags=re.IGNORECASE),
+                      "Shelby" : re.compile("Mustang Shelby", flags=re.IGNORECASE),
+                      "Mustang " : re.compile("Mustang GT(?: |$)", flags=re.IGNORECASE)
+                   }
+}
+
+
+
+
+def rosetta_factory(mk):
+    trans = mk in trnsl.keys() and trnsl[mk] or {}
+    def rosetta(mdl):
+        for sub, exp in trans.iteritems():
+            mdl = re.sub(exp, sub, mdl)
+        return mdl
+    return rosetta

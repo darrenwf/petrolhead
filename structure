@@ -1,0 +1,106 @@
+#!/usr/bin/env python
+
+
+import os, sys, string, re, pathlib
+from unidecode import unidecode as unid
+from fuzzywuzzy import process as fwp
+from fuzzywuzzy import fuzz as fwf
+execfile(sys.path[0]+"/rosetta")
+
+conf = {}
+conf["mkdir"] = pathlib.Path("/Users/dfitzgerald01/foo")
+
+depth = sys.argv[1]
+to_path = sys.argv[2]
+
+brands_lower = [ mk.lower() for mk in os.listdir(str(conf["mkdir"]))]
+brands = os.listdir(str(conf["mkdir"]))
+
+def sanitize(s, mk_s = lambda *args: locals()["args"][0]):
+    return mk_s(unid(s.strip().decode("utf")))
+
+def match_brand(mk):
+    if mk.lower() in brands_lower:
+        return brands_lower.index(mk.lower())
+    else:
+        return False
+
+
+def match_model(mdl, mk):
+    mdls = os.listdir(str( conf["mkdir"] / mk ))
+    mdls_lower = [ unid(x.lower().decode("utf")) for x in mdls]
+    pre_correct = rosetta_factory(mk)
+
+    #if mdl.lower() mdls_lower:
+        #return mdls[mdls_lower.index(mdl.lower())]
+
+    #====Fuzzy Matching=========
+    #build a list of possible matches to avoid shoehorning in every string into a specific model
+    mdl = sanitize(mdl, pre_correct)
+    #print mk + ": " + mdl
+    matches = []
+    for templ_mdl in reversed(mdls_lower):
+        if templ_mdl in mdl.lower() or fwf.token_set_ratio(mdl.lower(), templ_mdl) > 50:
+            matches.append(templ_mdl)
+            #return mdls[mdls_lower.index(templ_mdl)]
+
+    if matches:
+        scores = fwp.extract(unid(mdl.lower().decode("utf")), matches, scorer=fwf.token_set_ratio)
+        
+        #if there are any competing matches, pick the verbatim match or first
+        if len(scores) > 1 and scores[0][1] == scores[1][1]:
+            for score in scores:
+                if score[0] == mdl.lower().strip():
+                    return mdls[mdls_lower.index(score[0])]
+        match = scores[0][0]
+        return mdls[mdls_lower.index(match)]
+    return mdl
+    
+
+def trim_dir( path, level ):
+
+    trim = path.parts[int(level) - 1]
+    p = re.search("(.*?) -", trim)
+
+    if not p:
+        return trim
+    else:
+        return p.group(1)
+
+
+def trim_meta(trim):
+
+    meta = {}
+    meta_raw = string.split( trim, " " )
+
+    meta["year"] = meta_raw.pop(0)
+    meta["make"] = meta_raw.pop(0)
+
+    make_i = match_brand(meta["make"])
+    while not make_i:
+        meta["make"] += " " + meta_raw.pop(0)
+        if not meta_raw:
+            return False
+        make_i = match_brand(meta["make"])
+    meta["make"] = brands[make_i]
+    meta["model"] = match_model(" ".join(meta_raw), meta["make"])
+    if not meta["model"]:
+        return False
+
+    return meta
+
+
+def build_path( depth, to_path, from_path ):
+
+    trim = trim_dir(from_path, depth)
+    if not trim:
+        return ""
+    meta = trim_meta(trim)
+    if not meta:
+        return ""
+
+    return str(pathlib.Path(to_path) / meta["make"] / meta["model"] / meta["year"]/ trim / "03-Gallery")
+    #return trim + " > " + meta["model"]
+
+for line in sys.stdin:
+    print build_path( depth, pathlib.Path(to_path), pathlib.Path(line) )
