@@ -20,10 +20,15 @@ def sanitize(s, mk_s = lambda *args: locals()["args"][0]):
     return mk_s(unid(s.strip().decode("utf")))
 
 def match_brand(mk):
-    if mk.lower() in brands_lower:
-        return brands_lower.index(mk.lower())
-    else:
-        return False
+    
+    for i in range( 0, len(mk) ):
+        make_slice = mk[i:]
+        make_match = ""
+        while make_slice:
+            make_match += " " + make_slice.pop(0)
+            if make_match.strip().lower() in brands_lower:
+                return brands[brands_lower.index(make_match.strip().lower())], mk[0:i-1] + make_slice
+    return False
 
 
 def match_model(mdl, mk):
@@ -73,16 +78,17 @@ def trim_meta(trim):
     meta = {}
     meta_raw = string.split( trim, " " )
 
-    meta["year"] = meta_raw.pop(0)
-    meta["make"] = meta_raw.pop(0)
+    if not meta_raw:
+        return False
 
-    make_i = match_brand(meta["make"])
-    while not make_i:
-        meta["make"] += " " + meta_raw.pop(0)
-        if not meta_raw:
-            return False
-        make_i = match_brand(meta["make"])
-    meta["make"] = brands[make_i]
+    meta["year"] = meta_raw.pop(0)
+    if not meta_raw:
+        return False
+
+    meta["make"], meta_raw = match_brand(meta_raw)
+    if not meta["make"]:
+        return False
+
     meta["model"] = match_model(" ".join(meta_raw), meta["make"])
     if not meta["model"]:
         return False
@@ -99,7 +105,7 @@ def build_path( depth, to_path, from_path ):
     if not meta:
         return ""
 
-    return str(pathlib.Path(to_path) / meta["make"] / meta["model"] / meta["year"]/ trim / "03-Gallery")
+    return str(pathlib.Path(to_path) / meta["make"] / meta["model"] / meta["year"]/ trim ) 
     #return trim + " > " + meta["model"]
 
 for line in sys.stdin:
