@@ -27,7 +27,7 @@ def match_brand(mk):
         while make_slice:
             make_match += " " + make_slice.pop(0)
             if make_match.strip().lower() in brands_lower:
-                return brands[brands_lower.index(make_match.strip().lower())], mk[0:i-1] + make_slice
+                return brands[brands_lower.index(make_match.strip().lower())], mk[0:i] + make_slice
     return False
 
 
@@ -107,6 +107,11 @@ def build_path( depth, to_path, from_path ):
 
     return str(pathlib.Path(to_path) / meta["make"] / meta["model"] / meta["year"]/ trim ) 
     #return trim + " > " + meta["model"]
+
+def build_path_concepts( depth, to_path, from_path ):
+    trim = trim_dir(from_path, depth)
+    if not trim:
+        return ""
 
 for line in sys.stdin:
     print build_path( depth, pathlib.Path(to_path), pathlib.Path(line) )
